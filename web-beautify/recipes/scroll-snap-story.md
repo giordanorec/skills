@@ -49,7 +49,9 @@
 html { scroll-behavior: smooth; }
 
 .story {
-  scroll-snap-type: y mandatory;
+  /* `proximity` em vez de `mandatory` — keyboard PgDn/PgUp continuam funcionando.
+     `mandatory` quebra Page Up/Down: usuário não consegue parar entre chapters. */
+  scroll-snap-type: y proximity;
   overflow-y: scroll;
   height: 100vh;
   scroll-padding-top: 0;
@@ -57,7 +59,7 @@ html { scroll-behavior: smooth; }
 
 .chapter {
   scroll-snap-align: start;
-  scroll-snap-stop: always; /* nunca pula chapter no fling */
+  scroll-snap-stop: normal; /* `always` força stop e quebra keyboard skip */
   min-height: 100svh;        /* svh > vh em mobile (lida com toolbars) */
   display: flex;
   align-items: center;
@@ -98,20 +100,36 @@ html { scroll-behavior: smooth; }
   z-index: 50;
 }
 .story-dot {
+  /* WCAG 2.5.8 NEW 2.2: touch target ≥ 24px. Visualmente 10px, mas área clicável 28px. */
+  position: relative;
+  display: block;
+  width: 28px; height: 28px;
+  background: transparent;
+}
+.story-dot::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
   width: 10px; height: 10px;
   border-radius: 50%;
   background: var(--ink-2);
   opacity: .3;
   transition: opacity .2s ease, transform .2s ease;
 }
-.story-dot.is-active {
+.story-dot[aria-current="true"]::after {
   opacity: 1;
-  transform: scale(1.4);
+  transform: translate(-50%, -50%) scale(1.4);
   background: var(--accent);
+}
+.story-dot:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 50%;
 }
 ```
 
-## JS — sincronizar dots com chapter visível
+## JS — sincronizar dots com chapter visível (com aria-current)
 
 ```js
 const chapters = document.querySelectorAll('.chapter');
@@ -121,8 +139,9 @@ const io = new IntersectionObserver((entries) => {
   entries.forEach(e => {
     if (e.intersectionRatio < 0.5) return;
     const idx = Array.from(chapters).indexOf(e.target);
-    dots.forEach(d => d.classList.remove('is-active'));
-    dots[idx]?.classList.add('is-active');
+    // aria-current="true" no dot ativo (WCAG 2.4.8 location)
+    dots.forEach(d => d.removeAttribute('aria-current'));
+    if (dots[idx]) dots[idx].setAttribute('aria-current', 'true');
   });
 }, { threshold: 0.5, root: document.querySelector('.story') });
 
@@ -133,8 +152,23 @@ dots.forEach((dot, i) => {
   dot.addEventListener('click', (e) => {
     e.preventDefault();
     chapters[i].scrollIntoView({ behavior: 'smooth' });
+    // Move focus pro chapter destino (WCAG 2.4.3 Focus Order)
+    chapters[i].setAttribute('tabindex', '-1');
+    chapters[i].focus({ preventScroll: true });
   });
 });
+```
+
+## HTML — chapters precisam ser focusable + identificáveis
+
+```html
+<section class="chapter chapter-1" id="ch-1" tabindex="-1" aria-labelledby="ch-1-h">
+  <div class="chapter-inner">
+    <p class="eyebrow">capítulo 01</p>
+    <h2 id="ch-1-h">Título do chapter</h2>
+    <p>...</p>
+  </div>
+</section>
 ```
 
 ## Variant — Snap horizontal (chapters lado-a-lado)

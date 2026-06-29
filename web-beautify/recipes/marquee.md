@@ -46,7 +46,7 @@
 
 ```css
 .marquee {
-  background: var(--bg-deep, #1a1a1a);
+  background: var(--bg-deep);
   color: var(--text-on-deep, #fff);
   padding: 24px 0;
   overflow: hidden;
@@ -54,6 +54,24 @@
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
 }
+
+/* Botão pause acessível (WCAG 2.2.2 — content que move > 5s precisa controle) */
+.marquee-pause-btn {
+  position: absolute;
+  top: 8px; right: 12px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.2);
+  color: inherit;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.marquee-pause-btn:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+.marquee[data-paused="true"] .marquee-track { animation-play-state: paused; }
 
 .marquee-track {
   display: inline-flex;
@@ -84,6 +102,23 @@
 @media (prefers-reduced-motion: reduce) {
   .marquee-track { animation: none; }
 }
+```
+
+### JS — botão pause (WCAG 2.2.2 obrigatório pra movimento > 5s)
+
+```js
+const marquee = document.querySelector('.marquee');
+const btn = document.createElement('button');
+btn.className = 'marquee-pause-btn';
+btn.setAttribute('aria-label', 'Pausar movimento');
+btn.textContent = '⏸';
+btn.addEventListener('click', () => {
+  const paused = marquee.dataset.paused === 'true';
+  marquee.dataset.paused = !paused;
+  btn.textContent = paused ? '⏸' : '▶';
+  btn.setAttribute('aria-label', paused ? 'Pausar' : 'Continuar');
+});
+marquee.appendChild(btn);
 ```
 
 ## Velocidades calibradas

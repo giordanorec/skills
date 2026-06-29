@@ -22,22 +22,26 @@
 
 ## HTML
 
+⚠️ **A11y crítico**: tiles CLICÁVEIS devem ser `<a>` ou `<button>` semantic (não `<article>` com `onclick`). Tiles puramente apresentacionais ficam `<article>`.
+
 ```html
-<section class="bento" id="features">
+<section class="bento" id="features" aria-labelledby="bento-h">
   <header class="bento-header">
     <p class="eyebrow">recursos</p>
-    <h2>Quatro coisas que mudam como você joga.</h2>
+    <h2 id="bento-h">Quatro coisas que mudam como você joga.</h2>
   </header>
   <div class="bento-grid">
-    <article class="bento-tile bento-large">
-      <span class="bento-num">01</span>
+    <!-- Tile CLICÁVEL: <a> dá keyboard nav, focus visible default, screen reader -->
+    <a href="/feature/x" class="bento-tile bento-large">
+      <span class="bento-num" aria-hidden="true">01</span>
       <h3>Headline curta e específica</h3>
       <p>Descrição em 2 linhas max. Foca em valor, não em feature.</p>
-      <div class="bento-visual">
+      <div class="bento-visual" aria-hidden="true">
         <!-- ilustração / animação / mockup -->
       </div>
-    </article>
+    </a>
 
+    <!-- Tile NÃO-clicável (info-only): <article> sem href -->
     <article class="bento-tile bento-medium">
       <h3>Tile médio</h3>
       <p>Texto + visual mais comedido.</p>
@@ -48,10 +52,10 @@
       <p>Stat ou quote breve.</p>
     </article>
 
-    <article class="bento-tile bento-wide">
+    <a href="/feature/y" class="bento-tile bento-wide">
       <h3>Tile horizontal largo</h3>
       <p>Pra conteúdo que precisa de largura.</p>
-    </article>
+    </a>
   </div>
 </section>
 ```
@@ -93,7 +97,10 @@
   }
 }
 
-/* Tile base */
+/* Tile base — sombra em 3 CAMADAS REAIS:
+   1. inset highlight (separa do fundo, simula plano físico iluminado)
+   2. contact shadow curta (ancorada, distância < 4px — dá peso)
+   3. ambient shadow espalhada (depth, distância 16-24px — dá volume) */
 .bento-tile {
   position: relative;
   background: var(--card);
@@ -102,21 +109,37 @@
   padding: 32px;
   overflow: hidden;
   display: flex; flex-direction: column;
+  color: inherit;
+  text-decoration: none;
   box-shadow:
-    0 0 0 1px rgba(0,0,0,.02),
-    0 2px 6px rgba(0,0,0,.04);
+    inset 0 1px 0 rgba(255,255,255,.4),
+    0 1px 2px rgba(0,0,0,.04),
+    0 8px 24px rgba(0,0,0,.06);
   transition:
     transform .35s cubic-bezier(.2,.8,.2,1),
     box-shadow .35s ease,
     border-color .25s ease;
 }
-.bento-tile:hover {
+a.bento-tile:hover,
+a.bento-tile:focus-visible {
   transform: translateY(-6px);
   box-shadow:
-    0 0 0 1px rgba(0,0,0,.04),
-    0 12px 32px rgba(0,0,0,.10),
-    0 4px 12px rgba(0,0,0,.06);
-  border-color: color-mix(in srgb, var(--accent) 20%, var(--border));
+    inset 0 1px 0 rgba(255,255,255,.5),
+    0 4px 12px rgba(0,0,0,.06),
+    0 16px 40px rgba(0,0,0,.12);
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+
+/* Focus visible — WCAG 2.4.7 */
+a.bento-tile:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+/* Reduced motion — sem transform/hover lift */
+@media (prefers-reduced-motion: reduce) {
+  .bento-tile,
+  a.bento-tile:hover { transform: none; transition: none; }
 }
 
 .bento-num {

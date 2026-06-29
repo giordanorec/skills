@@ -46,21 +46,23 @@
   animation: meshFloat 18s ease-in-out infinite;
 }
 
-/* Cores devem vir da DESIGN.md âncora — NÃO inventar */
+/* Cores DEVEM vir da DESIGN.md âncora — NUNCA hex fallback (forçar erro visual se var
+   não foi definida, pra agente lembrar de ancorar). Se quiser sandbox sem âncora,
+   defina `--mesh-1/2/3` no `:root` explicitamente do projeto. */
 .mesh-blob-1 {
   width: 520px; height: 520px;
-  background: var(--mesh-1, #ffb59a);
+  background: var(--mesh-1);
   top: -120px; left: -100px;
 }
 .mesh-blob-2 {
   width: 460px; height: 460px;
-  background: var(--mesh-2, #ffd39a);
+  background: var(--mesh-2);
   bottom: -180px; right: -60px;
   animation-delay: -6s;
 }
 .mesh-blob-3 {
   width: 380px; height: 380px;
-  background: var(--mesh-3, #ff7a52);
+  background: var(--mesh-3);
   top: 30%; left: 35%;
   opacity: .35;
   animation-delay: -12s;
@@ -79,6 +81,16 @@
 
 @media (prefers-reduced-motion: reduce) {
   .mesh-blob { animation: none; }
+}
+
+/* MOBILE — reduzir blur (80-120px em mobile low-end causa 15-25ms rasterize) */
+@media (max-width: 720px) {
+  .mesh-blob { filter: blur(40px); opacity: .4; }
+}
+
+/* Forced colors — desligar */
+@media (forced-colors: active) {
+  .mesh-blob { display: none; }
 }
 ```
 

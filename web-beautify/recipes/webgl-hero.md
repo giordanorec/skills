@@ -85,14 +85,47 @@ export function HeroWebGL() {
 .webgl-hero {
   position: relative;
   height: 100svh;
+  /* Fundo SÓLIDO escuro garantido — texto branco sobre `#0a0a0a` = contraste ~16:1.
+     Cena WebGL é DECORATIVA por cima. Se o shader/cena for muito claro em alguma
+     região, adicione gradient overlay pra GARANTIR contraste mínimo no texto. */
   background: #0a0a0a;
 }
-.webgl-hero canvas { position: absolute; inset: 0; }
+.webgl-hero canvas {
+  position: absolute;
+  inset: 0;
+  /* aria-hidden no JSX/HTML, mas reforçar via CSS */
+}
+
+/* Gradient overlay obrigatório quando shader tem regiões claras —
+   garante 4.5:1 mínimo sobre o texto */
+.webgl-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(10,10,10,.6) 0%,
+    rgba(10,10,10,.2) 30%,
+    rgba(10,10,10,.7) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
 .webgl-hero-content {
-  position: relative; z-index: 1;
+  position: relative;
+  z-index: 2; /* acima do overlay */
   display: flex; flex-direction: column;
   justify-content: center; align-items: center;
-  height: 100%; color: #fff; text-align: center;
+  height: 100%;
+  color: #fff;
+  text-align: center;
+}
+
+.webgl-hero-content button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 4px;
+  box-shadow: 0 0 0 6px rgba(255,255,255,.2);
 }
 ```
 

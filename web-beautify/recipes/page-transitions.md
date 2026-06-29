@@ -220,6 +220,34 @@ function App() {
 - ⚠️ Screen readers anunciam mudança de página automaticamente — não interferir
 - ⚠️ Loading state visível se transição > 500ms (algum erro)
 
+### Focus management — código canônico
+
+```js
+// Em qualquer framework SPA, após navegação:
+function onRouteChange() {
+  // Move focus pro main content (não pro <a> clicado)
+  const main = document.querySelector('main') || document.querySelector('h1');
+  if (main) {
+    main.setAttribute('tabindex', '-1');
+    main.focus({ preventScroll: false });
+  }
+
+  // Announce route change pro screen reader
+  const ann = document.getElementById('route-announcer');
+  if (ann) {
+    ann.textContent = ''; // reset
+    setTimeout(() => {
+      ann.textContent = `Navegou para ${document.title}`;
+    }, 50);
+  }
+}
+```
+
+```html
+<!-- Live region pra anunciar mudança de página -->
+<div id="route-announcer" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+```
+
 ## Anti-patterns
 
 ❌ Transition > 600ms (parece bug)

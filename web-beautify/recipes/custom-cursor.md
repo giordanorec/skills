@@ -82,6 +82,18 @@
   .cursor { display: none; }
   html, body { cursor: auto; }
 }
+
+/* Reduced motion — desligar cursor custom (não-negociável) */
+@media (prefers-reduced-motion: reduce) {
+  html, body, a, button, [role="button"], input, select, textarea { cursor: auto; }
+  .cursor { display: none; }
+}
+
+/* Forced colors — desligar */
+@media (forced-colors: active) {
+  html, body, a, button { cursor: auto; }
+  .cursor { display: none; }
+}
 ```
 
 ## JS — Smooth follow + state machine

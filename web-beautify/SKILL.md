@@ -1,6 +1,6 @@
 ---
 name: web-beautify
-description: Embeleza websites a nível top mundial (Apple/Spotify/Nike-tier). Pipeline em 5 fases — Context → Plan (DESIGN.md âncora real) → Implement (recipes prontas: bento, kinetic, mesh, marquee, glass) → Red Team multi-perspectiva (craft, a11y, perf, originality, UX) → Iterate até aprovado. Estende a `anthropic/frontend-design` puxando DESIGN.md de 73+ brands reais e adicionando red team com 5 críticos. Use when invoked for landing pages, marketing sites, portfolios, SaaS dashboards, brand sites, ou refactor visual de qualquer site.
+description: Embeleza websites a nivel top mundial via pipeline 5-fase com DESIGN.md de 73+ brands reais e red team de 5 críticos (craft, a11y, perf, originality, UX). Use pra landing, marketing site, portfolio, SaaS, brand site ou refactor visual.
 ---
 
 # web-beautify — pipeline pra site nivel top mundial
@@ -136,23 +136,85 @@ NUNCA:
 - ❌ Use cor que não vem de var/token (zero hex hardcoded em CSS de produção)
 - ❌ Use emoji 🚀 ✨ 💡 🔥 decorativamente em headers
 - ❌ Use copy genérica tipo "The future of X is here", "Empower your Y"
+- ❌ Use a heurística do `context-analyzer` pra escolher Linear como "default dev" e cair em Inter de novo. A heurística é ponto de partida, não fim. **Force escolha de fonte distinta** quando DESIGN.md âncora não especifica oficialmente sua própria fonte com licença liberada.
+
+### Fontes alternativas canônicas (use ao invés dos defaults banidos)
+
+| No lugar de | Use |
+|---|---|
+| Inter / Roboto | Geist Sans (Vercel, OFL), Söhne (paid mas marker), Plus Jakarta Sans (alternative neutra), Manrope, Switzer (Fontshare), Cabinet Grotesk |
+| Arial / Helvetica | Söhne, Founders Grotesk, Aktiv Grotesk, Neue Haas Grotesk |
+| Space Grotesk | Mono Variable da Pangram Pangram, JetBrains Mono em display, Fragment Mono, Departure Mono |
+| Serifs default | Tiempos, Source Serif 4, EB Garamond, Instrument Serif (Fontshare), Fraunces (variable, OFL) |
+
+Catálogos: [Fontshare](https://www.fontshare.com), [Pangram Pangram](https://pangrampangram.com), [GitHub Vercel/Geist](https://github.com/vercel/geist-font).
 
 ### Performance budgets (por tier)
 
-| Tier | LCP mobile | JS gzip | CSS gzip |
-|---|---|---|---|
-| 1 simples | < 2.0s | < 100KB | < 50KB |
-| 2 SaaS | < 2.5s | < 200KB | < 80KB |
-| 3 campaign | < 3.0s | < 350KB | < 100KB |
-| 4 awwwards | < 4.0s | < 500KB + WebGL | < 120KB |
+Métricas core (Core Web Vitals: LCP, CLS, INP). Veja `references/04_stacks.md` e cada recipe pra detalhe.
 
-### Acessibilidade
+| Tier | LCP mobile | CLS | INP | JS gzip | CSS gzip | Total imagens |
+|---|---|---|---|---|---|---|
+| 1 simples   | < 2.0s | < 0.05 | < 100ms | < 100KB | < 50KB  | < 500KB |
+| 2 SaaS      | < 2.5s | < 0.10 | < 200ms | < 200KB | < 80KB  | < 800KB |
+| 3 campaign  | < 3.0s | < 0.10 | < 200ms | < 350KB | < 100KB | < 1.5MB |
+| 4 awwwards  | < 4.0s | < 0.10 | < 200ms | < 500KB + WebGL | < 120KB | < 3MB |
 
-- WCAG 2.2 AA é o MÍNIMO sempre
-- Contraste 4.5:1 texto normal, 3:1 large/UI
-- Focus visible em TUDO
-- `prefers-reduced-motion: reduce` desliga animations decorativas
-- Keyboard navigation completa
+**Estratégia obrigatória em Fase 3 (build/implement)**:
+
+- **Fonts**: `<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>` + `display=swap` + self-host quando possível
+- **Images**: `<picture>` com AVIF → WebP → JPEG fallback, `width`/`height` setados, `loading="lazy"` em tudo abaixo do fold, `fetchpriority="high"` no LCP hero image
+- **JS**: `defer` ou `async` em scripts não-críticos, code-split por route, dynamic import pra rotas pesadas
+- **CSS**: critical-CSS inline pro fold, resto deferido
+
+**Em Fase 4, MEDIR (não estimar)**:
+
+- `npx lighthouse <url> --quiet --chrome-flags="--headless"` → LCP, CLS, INP, total bytes
+- `gzip -c dist/main.js | wc -c` → bundle real
+- Chrome DevTools Performance Monitor enquanto rolando → rasterize time
+- `npx @axe-core/cli <url>` → violations WCAG reais (não simulação mental)
+
+### Acessibilidade — hard floor (WCAG 2.2 AA)
+
+Não-negociável. Critérios destacados (use linguagem exata em comentários de código):
+
+- **1.4.3 Contrast (Minimum)**: 4.5:1 texto normal, 3:1 large text (18px+ regular, 14px+ bold) e UI components
+- **1.4.11 Non-text Contrast**: 3:1 pra borders, focus rings, ícones funcionais
+- **2.1.1 Keyboard**: tudo interativo alcançável via Tab/Shift+Tab/Enter/Space
+- **2.4.7 Focus Visible**: indicador visual claro em TODO `:focus-visible` (NUNCA `outline: none` sem substituto)
+- **2.4.11 Focus Not Obscured** (NEW 2.2): focus indicator não pode ficar escondido por sticky/fixed
+- **2.5.7 Dragging Movements** (NEW 2.2): drag interactions com alternativa single-point
+- **2.5.8 Target Size (Minimum)** (NEW 2.2): touch targets ≥ 24×24px AA (≥ 44×44px AAA recomendado)
+- **3.2.6 Consistent Help**: nav/ajuda na mesma posição entre páginas
+- **prefers-reduced-motion: reduce**: desliga animations decorativas SEM exceção
+- **forced-colors: active**: testar Windows High Contrast mode
+- **lang="<código>"** no `<html>` SEMPRE
+
+CSS canônico `:focus-visible` (use em TODAS as recipes):
+
+```css
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+button:focus-visible,
+a:focus-visible {
+  outline-color: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+```
+
+### Política de severidade do red team (HARD GATE)
+
+**Ship só com TODOS os 5 críticos em `approved`**. Política por crítico:
+
+- **a11y**: aprova ZERO critical (mais rígido — site público sem a11y é descartado)
+- **craft, perf, originality, ux**: aprova ZERO critical + max 2 high
+
+`rejected` em qualquer crítico = volta pra Fase 2 (replan).
+2+ `needs_revision` = iterate.
+3 iterações sem convergir = STEP BACK, replan inteiro.
 
 ## Onde olhar pra detalhes
 
@@ -166,14 +228,19 @@ Detalhes ficam em `references/` (carregar on-demand, não tudo de uma vez):
 - `06_books_guides.md` — Refactoring UI, Practical Typography, etc — pra fundamentar decisões
 - `07_meta_gaps.md` — o que essa v1 não cobre (color science, motion principles, etc — roadmap)
 
-Recipes ficam em `recipes/`:
+Recipes em `recipes/` — todas DISPONÍVEIS na v0.1 (com elevator pitch + tier mínimo):
 
-- `bento-grid.md`
-- `kinetic-typography.md`
-- `mesh-gradient.md`
-- `marquee.md`
-- `glassmorphism-nav.md`
-- (futuras: scroll-snap-story, custom-cursor, webgl-hero, page-transitions)
+| Recipe | Tier mín | Quando usar |
+|---|---|---|
+| [`glassmorphism-nav`](recipes/glassmorphism-nav.md) | 1+ | Header sticky em qualquer site moderno |
+| [`mesh-gradient`](recipes/mesh-gradient.md) | 1+ | Hero atmospheric, CTA band, section transition |
+| [`kinetic-typography`](recipes/kinetic-typography.md) | 2+ | Hero principal premium ou statement section |
+| [`bento-grid`](recipes/bento-grid.md) | 2+ | 5-7 features com tamanhos/pesos diferentes, hover ativo |
+| [`marquee`](recipes/marquee.md) | 2+ | Logos clientes, tagline manifesto, ticker |
+| [`scroll-snap-story`](recipes/scroll-snap-story.md) | 2+ | Narrativa linear (max 7 chapters) com snap |
+| [`custom-cursor`](recipes/custom-cursor.md) | 3+ | Portfolio/design tool ONLY. NUNCA SaaS/commerce |
+| [`page-transitions`](recipes/page-transitions.md) | 3+ | MPA com fluidez SPA, shared element transitions |
+| [`webgl-hero`](recipes/webgl-hero.md) | 4 | Brand campaign / award submission. Sempre com fallback |
 
 Agentes em `agents/`:
 

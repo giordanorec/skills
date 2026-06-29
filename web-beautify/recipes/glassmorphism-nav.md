@@ -41,14 +41,26 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  background: rgba(255, 255, 255, .72);
+  /* 0.92 garante 4.5:1 contraste mesmo sobre mesh gradient laranja vibrante.
+     0.72 era o ideal estético mas falha WCAG quando o background atrás é colorido.
+     Se sua brand permite glass mais translúcido, mede contraste em TODOS os
+     possíveis fundos (hero gradient, dark mode, mesh, etc) antes de baixar. */
+  background: rgba(255, 255, 255, .92);
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
   border-bottom: 1px solid var(--border, rgba(0,0,0,.08));
+}
 
-  /* Fallback pra browsers sem backdrop-filter */
-  @supports not (backdrop-filter: blur(20px)) {
-    background: rgba(255, 255, 255, .95);
+/* Fallback solid pra browsers sem backdrop-filter */
+@supports not (backdrop-filter: blur(20px)) {
+  .site-header { background: rgba(255, 255, 255, .98); }
+}
+
+/* Forced colors mode (Windows High Contrast) — preservar contorno */
+@media (forced-colors: active) {
+  .site-header {
+    background: Canvas;
+    border-bottom: 1px solid CanvasText;
   }
 }
 
@@ -72,7 +84,8 @@
 .brand-mark { font-size: 22px; line-height: 1; transition: transform .3s ease; }
 .brand:hover .brand-mark { transform: rotate(-12deg); }
 .brand-title {
-  font-family: var(--font-display, 'Inter', sans-serif);
+  /* Fonte vem da DESIGN.md âncora. Fallback SÓ system stack (Inter é AI default banido). */
+  font-family: var(--font-display, system-ui, -apple-system, BlinkMacSystemFont, sans-serif);
   font-size: 17px;
   font-weight: 800;
   letter-spacing: -.025em;
@@ -93,7 +106,17 @@
   transition: opacity .15s ease;
 }
 .header-nav a:hover { opacity: 1; }
-.header-nav a[aria-current="page"] { opacity: 1; }
+.header-nav a[aria-current="page"] { opacity: 1; font-weight: 600; }
+
+/* Focus visible — WCAG 2.4.7 (não-negociável) */
+.header-nav a:focus-visible,
+.brand:focus-visible,
+.header-actions .btn:focus-visible {
+  outline: 2px solid var(--accent, #0066cc);
+  outline-offset: 4px;
+  border-radius: 4px;
+  opacity: 1;
+}
 
 .header-actions {
   display: flex;

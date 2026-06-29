@@ -18,10 +18,17 @@ A mais usada. Word swap dentro de um H1 estático.
 
 ### HTML
 
+⚠️ **A11y crítico**: o rotator é visual-only. Sem `aria-hidden`, leitor de tela
+recebe 5 palavras seguidas como frase incoerente ("uma palavra um cheiro uma sensação
+domingo de manhã uma palavra"). Solução: `aria-hidden` no rotator + texto canônico em `.sr-only`.
+
 ```html
 <h1 class="hero-title">
   Você pensa em
-  <span class="kinetic-rotator">
+  <!-- Versão pra leitor de tela: texto estático canônico -->
+  <span class="sr-only">uma palavra, um cheiro, uma sensação.</span>
+  <!-- Versão visual: rotator escondido pro SR -->
+  <span class="kinetic-rotator" aria-hidden="true">
     <span class="kinetic-track">
       <span class="kinetic-word">uma palavra.</span>
       <span class="kinetic-word">um cheiro.</span>
@@ -37,6 +44,24 @@ A mais usada. Word swap dentro de um H1 estático.
 ### CSS
 
 ```css
+/* Padrão universal pra esconder visualmente mas manter pro SR */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Tracking display agressivo (-2.5% a -3.5%) — diferencia kinetic Stripe-tier de AI slop */
+.hero-title {
+  font-size: clamp(48px, 7vw, 92px);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+}
+
 .kinetic-rotator {
   display: inline-block;
   height: 1.05em;
@@ -53,6 +78,8 @@ A mais usada. Word swap dentro de um H1 estático.
   color: var(--accent);
   font-style: italic;
   line-height: 1.05;
+  letter-spacing: -0.035em; /* italic aparenta mais espaçado, tightening compensa */
+  font-weight: 700; /* 700 italic > 800 italic (que geralmente fica feio) */
 }
 @keyframes kineticScroll {
   0%, 18% { transform: translateY(0%); }
